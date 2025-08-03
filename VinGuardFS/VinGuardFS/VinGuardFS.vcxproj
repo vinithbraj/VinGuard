@@ -122,6 +122,7 @@
     <ClCompile Include="Driver.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="VinGuardDebugMacros.h" />
     <ClInclude Include="VinGuardFilterCallback.h" />
     <ClInclude Include="VinGuardFilterKernelToUserComm.h" />
     <ClInclude Include="VinGuardFilterRegistration.h" />
