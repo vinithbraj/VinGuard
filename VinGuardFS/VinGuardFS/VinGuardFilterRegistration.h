@@ -4,40 +4,42 @@ extern "C"
 {
     #include <fltKernel.h>
     #pragma comment(lib, "fltmgr.lib")
-
-    #include "VinGuardFilterCallback.h"
 }
 
-class VinGuardFSRegistration {
+#include "VinGuardFilterCallback.h"
+namespace VinGuard {
+    class filter_registration {
 
-public:
+    public:
 
-    static PFLT_FILTER gFilterHandle;
+        static PFLT_FILTER s_filter_handle;
 
 
-    static NTSTATUS UnloadFilter(FLT_FILTER_UNLOAD_FLAGS Flags)
-    {
-        UNREFERENCED_PARAMETER(Flags);
-        FltUnregisterFilter(gFilterHandle);
-        return STATUS_SUCCESS;
-    }
+        static NTSTATUS unload_filter(FLT_FILTER_UNLOAD_FLAGS Flags)
+        {
+            UNREFERENCED_PARAMETER(Flags);
+            FltUnregisterFilter(s_filter_handle);
+            return STATUS_SUCCESS;
+        }
 
-    static NTSTATUS LoadFilter(PDRIVER_OBJECT DriverObject)
-    {
-         static const FLT_REGISTRATION FilterRegistration = {
-            sizeof(FLT_REGISTRATION),
-            FLT_REGISTRATION_VERSION,
-            0, // Flags
-            NULL, // Contexts
-            VinGuardFilterCallback::Callbacks,
-            UnloadFilter,
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL
-        };
+        static NTSTATUS load_filter(PDRIVER_OBJECT DriverObject)
+        {
+             static const FLT_REGISTRATION FilterRegistration = {
+                sizeof(FLT_REGISTRATION),
+                FLT_REGISTRATION_VERSION,
+                0, // Flags
+                NULL, // Contexts
+                VinGuardFilterCallback::Callbacks,
+                unload_filter,
+                NULL, NULL, NULL, NULL, NULL, NULL, NULL
+            };
 
-        auto status = FltRegisterFilter(DriverObject, &FilterRegistration, &gFilterHandle);
-        return status;
-    }
+            auto status = FltRegisterFilter(DriverObject, &FilterRegistration, &s_filter_handle);
+            return status;
+        }
 
-};
+    };
+}
 
-PFLT_FILTER VinGuardFSRegistration::gFilterHandle = nullptr;
+
+PFLT_FILTER VinGuard::filter_registration::s_filter_handle = nullptr;

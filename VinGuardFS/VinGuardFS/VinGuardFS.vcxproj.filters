@@ -38,8 +38,16 @@
     <ClInclude Include="VinGuardFilterKernelToUserComm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VinGuardDebugMacros.h">
+    <ClInclude Include="..\..\VinGuardShared\VinGuardDebugMacros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\VinGuardShared\VinGuardKSerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\VinGuardShared\VinGuardMessageDefs.h">
+      <Filter>Header Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

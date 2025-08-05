@@ -89,6 +89,9 @@
     </Link>
     <ClCompile>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>..\..\VinGuardShared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>
+      </TreatWChar_tAsBuiltInType>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -100,17 +103,30 @@
     </Link>
     <ClCompile>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>..\..\VinGuardShared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>
+      </TreatWChar_tAsBuiltInType>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\VinGuardShared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>
+      </TreatWChar_tAsBuiltInType>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\VinGuardShared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>
+      </TreatWChar_tAsBuiltInType>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Inf Include="VinGuardFS.inf" />
@@ -122,10 +138,14 @@
     <ClCompile Include="Driver.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VinGuardDebugMacros.h" />
+    <ClInclude Include="..\..\VinGuardShared\VinGuardDebugMacros.h" />
+    <ClInclude Include="..\..\VinGuardShared\VinGuardKSerializer.h" />
     <ClInclude Include="VinGuardFilterCallback.h" />
     <ClInclude Include="VinGuardFilterKernelToUserComm.h" />
     <ClInclude Include="VinGuardFilterRegistration.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\VinGuardShared\VinGuardMessageDefs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

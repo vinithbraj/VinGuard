@@ -1,6 +1,7 @@
 #pragma once 
 #include "VinGuardFilterRegistration.h"
 #include "VinGuardFilterCallback.h"
+#include "VinGuardFilterKernelToUserComm.h"
 
 extern "C"
 NTSTATUS
@@ -12,14 +13,14 @@ DriverEntry(
     UNREFERENCED_PARAMETER(RegistryPath);
     NTSTATUS status;
 
-    status = VinGuardFSRegistration::LoadFilter(DriverObject);
+    status = VinGuard::filter_registration::load_filter(DriverObject);
     if (!NT_SUCCESS(status)) {
         return status;
     }
 
-    status = FltStartFiltering(VinGuardFSRegistration::gFilterHandle);
+    status = FltStartFiltering(VinGuard::filter_registration::s_filter_handle);
     if (!NT_SUCCESS(status)) {
-        FltUnregisterFilter(VinGuardFSRegistration::gFilterHandle);
+        FltUnregisterFilter(VinGuard::filter_registration::s_filter_handle);
     }
 
     return status;
