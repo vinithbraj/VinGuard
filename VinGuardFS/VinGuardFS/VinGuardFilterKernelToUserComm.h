@@ -39,15 +39,23 @@ extern "C"
 			PFLT_PORT m_client_port;
 			PFLT_FILTER m_filter_handle;
 
-			kernel_user_com(PFLT_FILTER filter_handle) :
-				m_filter_handle(filter_handle),
+			kernel_user_com():
+				m_filter_handle(nullptr),
 				m_server_port(nullptr),
 				m_client_port(nullptr)
 			{
-
 			}
 
-			bool initialize() {
+			NTSTATUS initialize(PFLT_FILTER filter_handle) {
+
+				di("Enter coms registration");
+
+				if (!filter_handle) {
+					de("Invalid filter handle");
+					return STATUS_INVALID_PARAMETER;
+				}
+
+				m_filter_handle = filter_handle;
 
 				OBJECT_ATTRIBUTES port_attributes = { NULL };
 				const ULONG flags = OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE;
@@ -71,13 +79,29 @@ extern "C"
 
 				if (STATUS_SUCCESS != result) {
 					de("Failed creating communication port - NTSTATUS = %ul", result);
-					return false;
 				}
-				return true;
+
+				di("Exit coms registration");
+				return result;
 			}
 
-			bool shutdown() {
+			void shutdown() {
 
+				di("enter - coms shutdown");
+
+				// Close the client port if it's open
+				if (m_client_port) {
+					FltCloseClientPort(m_filter_handle, &m_client_port);
+					m_client_port = nullptr;
+				}
+
+				// Close the server port
+				if (m_server_port) {
+					FltCloseCommunicationPort(m_server_port);
+					m_server_port = nullptr;
+				}
+
+				di("exit - coms shutdown");
 			}
 
 			NTSTATUS send_message_sync(
@@ -145,6 +169,8 @@ extern "C"
 				PVOID* connection_cookie
 			)
 			{
+				di("enter callback on connect");
+
 				UNREFERENCED_PARAMETER(size_of_context);
 				UNREFERENCED_PARAMETER(connection_context);
 
@@ -162,6 +188,8 @@ extern "C"
 
 				*connection_cookie = server_port_cookie;
 				connection_obj->m_client_port = client_port;
+
+				di("exit callback on connect");
 				return STATUS_SUCCESS;
 			}
 
@@ -169,7 +197,7 @@ extern "C"
 					_In_opt_ PVOID connection_cookie
 				)
 			{	
-				di("Closing port");
+				di("enter callback on disconnect");
 
 				kernel_user_com* connection_obj = (kernel_user_com*)(connection_cookie);
 				if (!connection_obj) {
@@ -181,8 +209,9 @@ extern "C"
 						&connection_obj->m_client_port);
 
 					connection_obj->m_client_port = nullptr;
-
 				}
+
+				di("exit callback on disconnect");
 			}
 
 			static NTSTATUS callback_on_message(
@@ -194,6 +223,8 @@ extern "C"
 					_Out_ PULONG return_output_buffer_length
 				)
 			{
+				di("enter callback on message");
+
 				UNREFERENCED_PARAMETER(input_buffer_size);
 				UNREFERENCED_PARAMETER(output_buffer_size);
 
@@ -214,6 +245,9 @@ extern "C"
 
 
 				//process the message
+
+				di("exit callback on message");
+
 				return STATUS_SUCCESS;
 			}
 		};

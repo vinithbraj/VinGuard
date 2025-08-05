@@ -23,27 +23,31 @@ extern "C"
 #pragma comment(lib, "fltmgr.lib")
 }
 
-class VinGuardFilterCallback {
+namespace VinGuard
+{
+    class filter_callback {
 
-public:
+    public:
 
-    static const FLT_OPERATION_REGISTRATION Callbacks[];
+        static const FLT_OPERATION_REGISTRATION Callbacks[];
 
-    static FLT_PREOP_CALLBACK_STATUS PreCreateCallback(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext)
-    {
-        UNREFERENCED_PARAMETER(CompletionContext);
-        UNREFERENCED_PARAMETER(FltObjects);
+        static FLT_PREOP_CALLBACK_STATUS PreCreateCallback(PFLT_CALLBACK_DATA Data, PCFLT_RELATED_OBJECTS FltObjects, PVOID* CompletionContext)
+        {
+            UNREFERENCED_PARAMETER(CompletionContext);
+            UNREFERENCED_PARAMETER(FltObjects);
 
-        if (Data->Iopb && Data->Iopb->TargetFileObject && Data->Iopb->TargetFileObject->FileName.Buffer) {
-            DbgPrint("AVMinifilter: File open: %wZ\n", &Data->Iopb->TargetFileObject->FileName);
+            if (Data->Iopb && Data->Iopb->TargetFileObject && Data->Iopb->TargetFileObject->FileName.Buffer) {
+                DbgPrint("VinGuardFS: File open: %wZ\n", &Data->Iopb->TargetFileObject->FileName);
+            }
+
+            return FLT_PREOP_SUCCESS_NO_CALLBACK;
         }
 
-        return FLT_PREOP_SUCCESS_NO_CALLBACK;
-    }
+    };
 
-};
-
-const FLT_OPERATION_REGISTRATION VinGuardFilterCallback::Callbacks[] = {
-     { IRP_MJ_CREATE, 0, VinGuardFilterCallback::PreCreateCallback, NULL },
-     { IRP_MJ_OPERATION_END }
-};
+    // only one callback is registered for now.
+    const FLT_OPERATION_REGISTRATION filter_callback::Callbacks[] = {
+         { IRP_MJ_CREATE, 0, filter_callback::PreCreateCallback, NULL },
+         { IRP_MJ_OPERATION_END }
+    };
+}

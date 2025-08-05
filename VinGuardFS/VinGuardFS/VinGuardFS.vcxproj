@@ -143,6 +143,7 @@
     <ClInclude Include="VinGuardFilterCallback.h" />
     <ClInclude Include="VinGuardFilterKernelToUserComm.h" />
     <ClInclude Include="VinGuardFilterRegistration.h" />
+    <ClInclude Include="VinGuardMem.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\VinGuardShared\VinGuardMessageDefs.h" />
