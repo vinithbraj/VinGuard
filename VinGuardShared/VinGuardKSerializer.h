@@ -18,7 +18,7 @@
 #pragma once
 
 #include <fltKernel.h>
-#include "VinGuardDebugMacros.h"
+#include "VinGuardKDebugMacros.h"
 
 typedef unsigned char* LPBYTE;
             
@@ -75,9 +75,8 @@ namespace VinGuard
     bool memory_stream_writer(PMEMORY_STREAM stream, const PVOID in_data, ULONG size)
     {
         if (!stream || !in_data || stream->offset + size > stream->capacity)
-        {
             return FALSE;
-        }
+
         RtlCopyMemory(
             stream->buffer + stream->offset, 
             in_data, 
@@ -176,7 +175,6 @@ namespace functors
 	    {
             UNREFERENCED_PARAMETER(size);
             UNREFERENCED_PARAMETER(_heap);
-            UNREFERENCED_PARAMETER(_heap_size);
 
             memory_stream_reader(stream, p, sizeof(pod));
 	    }

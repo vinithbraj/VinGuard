@@ -26,23 +26,16 @@ namespace VinGuard {
 			SERIALIZE_INIT()
 		}
 		
-		ULONG m_somedata;
+		ULONG file_action;
+		ULONG filter_verdict;
+		ULONG instance_cookie;
 		auto_unicode_string m_canonical_file_path;
-		auto_unicode_string m_canonical_file_path2;
-		auto_unicode_string m_canonical_file_path3;
-		auto_unicode_string m_canonical_file_path4;
-		auto_unicode_string m_canonical_file_path5;
-		auto_unicode_string m_canonical_file_path6;
-		auto_unicode_string m_canonical_file_path7;
 
 		SERIALIZE_MAP_BEGIN()
+			SERIALIZE_MAP_ENTRY_POD(ULONG, file_action)
+			SERIALIZE_MAP_ENTRY_POD(ULONG, filter_verdict)
+			SERIALIZE_MAP_ENTRY_POD(ULONG, instance_cookie)
 			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path._str,0)
-			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path2._str, 0)
-			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path3._str, 0)
-			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path4._str, 0)
-			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path5._str, 0)
-			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path6._str, 0)
-			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path7._str, 0)
 		SERIALIZE_MAP_END()
 	};
 }

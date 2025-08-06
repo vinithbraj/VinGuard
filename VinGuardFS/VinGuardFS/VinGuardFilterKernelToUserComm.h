@@ -24,8 +24,8 @@ extern "C"
 	#pragma comment(lib, "fltmgr.lib")
 }
 
-#include "VinGuardDebugMacros.h"
-#include "VinGuardMessageDefs.h"
+#include "VinGuardKDebugMacros.h"
+#include "VinGuardKMessageDefs.h"
 
 	namespace VinGuard
 	{
@@ -61,11 +61,17 @@ extern "C"
 				const ULONG flags = OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE;
 				UNICODE_STRING l_port_name = RTL_CONSTANT_STRING(port_name);
 
+				// Todo: Restrict this
+				PSECURITY_DESCRIPTOR sd;
+				NTSTATUS status = FltBuildDefaultSecurityDescriptor(&sd, FLT_PORT_ALL_ACCESS);
+				if (!NT_SUCCESS(status)) {
+					return status;
+				}
+
 				InitializeObjectAttributes(
 					&port_attributes,
 					&l_port_name,
-					flags, 0, 0);
-
+					flags, 0, sd);
 
 				NTSTATUS result = FltCreateCommunicationPort(
 					m_filter_handle,
@@ -107,9 +113,10 @@ extern "C"
 			NTSTATUS send_message_sync(
 				PVOID send_buffer, ULONG send_buffer_size,
 				PVOID reply_buffer, ULONG reply_buffer_size,
-				ULONG relative_timeout)
+				ULONG relative_timeout_ms)
 			{
-				UNREFERENCED_PARAMETER(relative_timeout);
+				LARGE_INTEGER timeout;
+				timeout.QuadPart = -((LONGLONG)relative_timeout_ms * 10 * 1000);
 
 				if (!m_filter_handle)
 				{
@@ -137,7 +144,7 @@ extern "C"
 					send_buffer_size,
 					reply_buffer,
 					&reply_buffer_size,
-					NULL);
+					&timeout);
 
 				if (STATUS_SUCCESS != status) {
 					de("Failed sendign message - %ul", status);
