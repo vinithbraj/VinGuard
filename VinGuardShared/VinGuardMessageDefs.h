@@ -22,9 +22,27 @@
 namespace VinGuard {
 	struct filter_message : serializer
 	{
+		filter_message() {
+			SERIALIZE_INIT()
+		}
+		
 		ULONG m_somedata;
+		auto_unicode_string m_canonical_file_path;
+		auto_unicode_string m_canonical_file_path2;
+		auto_unicode_string m_canonical_file_path3;
+		auto_unicode_string m_canonical_file_path4;
+		auto_unicode_string m_canonical_file_path5;
+		auto_unicode_string m_canonical_file_path6;
+		auto_unicode_string m_canonical_file_path7;
+
 		SERIALIZE_MAP_BEGIN()
-			SERIALIZE_MAP_ENTRY_POD(ULONG, m_somedata)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path._str,0)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path2._str, 0)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path3._str, 0)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path4._str, 0)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path5._str, 0)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path6._str, 0)
+			SERIALIZE_MAP_ENTRY_CHAR(&m_canonical_file_path7._str, 0)
 		SERIALIZE_MAP_END()
 	};
 }

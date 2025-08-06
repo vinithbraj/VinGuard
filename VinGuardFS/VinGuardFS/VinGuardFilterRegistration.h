@@ -24,6 +24,7 @@ extern "C"
 }
 
 #include "VinGuardMem.h"
+#include "VinGuardMessageDefs.h"
 #include "VinGuardDebugMacros.h"
 #include "VinGuardFilterCallback.h"
 #include "VinGuardFilterKernelToUserComm.h"
@@ -47,7 +48,7 @@ namespace VinGuard {
 
             if (g_filter_comm) {
                 g_filter_comm->shutdown();
-                VinGuard::free_kernel_object(g_filter_comm);
+                VinGuard::memory::free_kernel_object(g_filter_comm);
             }
 
             FltUnregisterFilter(s_filter_handle);
@@ -82,9 +83,57 @@ namespace VinGuard {
                  return status;
              }
 
+             //test code 
+             UNICODE_STRING test;
+             RtlInitUnicodeString(&test, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt");
+             UNICODE_STRING test2;
+             RtlInitUnicodeString(&test2, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt2");
+             UNICODE_STRING test3;
+             RtlInitUnicodeString(&test3, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt3");
+             UNICODE_STRING test4;
+             RtlInitUnicodeString(&test4, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt4");
+             UNICODE_STRING test5;
+             RtlInitUnicodeString(&test5, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt5");
+             UNICODE_STRING test6;
+             RtlInitUnicodeString(&test6, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt6");
+             UNICODE_STRING test7;
+             RtlInitUnicodeString(&test7, L"\\Device\\HarddiskVolume1\\Windows\\System32\\file.txt7");
+
+             VinGuard::filter_message x;
+             x.m_canonical_file_path = &test;
+             x.m_canonical_file_path2= &test2;
+             x.m_canonical_file_path3 = &test3;
+             x.m_canonical_file_path4 = &test4;
+             x.m_canonical_file_path5 = &test5;
+             x.m_canonical_file_path6 = &test6;
+             x.m_canonical_file_path7 = &test7;
+
+             PMEMORY_STREAM out = VinGuard::memory::allocate_memory_buffer(1000);
+             x.serialize(out);
+
+
+
+            // di("deserialized in = %wZ ------>", x.m_canonical_file_path);
+             //di("deserialized in = %wZ ------>  out = %ws", x.m_canonical_file_path, out->buffer+4);
+
+
+              VinGuard::filter_message y;
+              y.deserialize(out);
+              
+              di("hell yeah in = %wZ -  %wZ ------>", x.m_canonical_file_path, y.m_canonical_file_path);
+              di("hell yeah in = %wZ -  %wZ ------>", x.m_canonical_file_path2, y.m_canonical_file_path2);
+              di("hell yeah in = %wZ - %wZ ------>", x.m_canonical_file_path3, y.m_canonical_file_path3);
+              di("hell yeah in = %wZ - %wZ ------>", x.m_canonical_file_path4, y.m_canonical_file_path4);
+              di("hell yeah in = %wZ - %wZ ------>", x.m_canonical_file_path5, y.m_canonical_file_path5);
+              di("hell yeah in = %wZ - %wZ ------>", x.m_canonical_file_path6, y.m_canonical_file_path6);
+              di("hell yeah in = %wZ - %wZ ------>", x.m_canonical_file_path7, y.m_canonical_file_path7);
+
+              
+
+
              //establish ports and callback infrastructure
              di("establish driver ports");
-             g_filter_comm = VinGuard::allocate_simple_pod_kernel_object<VinGuard::kernel_user_com>();
+             g_filter_comm = VinGuard::memory::allocate_simple_pod_kernel_object<VinGuard::kernel_user_com>();
              if (!g_filter_comm)
              {
                  de("Failed allocating memory for filter comms object");

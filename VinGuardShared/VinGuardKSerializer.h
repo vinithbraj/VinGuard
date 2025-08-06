@@ -21,26 +21,39 @@
 #include "VinGuardDebugMacros.h"
 
 typedef unsigned char* LPBYTE;
-
+            
+#define SERIALIZE_INIT() generate_blocks();
 #define SERIALIZE_MAP_BEGIN() virtual void generate_blocks() \
 {
 
-#define SERIALIZE_MAP_ENTRY_STD_STRING(_data)\
-{\
-	VinGuard::block _block((PVOID)&_data,0,&VinGuard::functors::out::_s_stdstring,&VinGuard::functors::in::_d_stdstring);\
-	_blocks.push(_block);\
-}
-
 #define SERIALIZE_MAP_ENTRY_POD(_type,_data)\
 {\
-	VinGuard::block _block((PVOID)&_data,0,&VinGuard::functors::out::_s_pod<_type>,&VinGuard::functors::in::_d_pod<_type>);\
-	_blocks.push(_block);\
+	VinGuard::block _block(\
+            (PVOID)&_data,\
+            0,\
+            &VinGuard::functors::out::_s_pod<_type>,\
+            &VinGuard::functors::in::_d_pod<_type>);\
+	        _blocks.push(_block);\
 }
 
-#define SERIALIZE_MAP_ENTRY_BYTE( _type, _data, _size )\
+#define SERIALIZE_MAP_ENTRY_BYTE(_data, _size )\
 {\
-	VinGuard::block _block((PVOID)&_data, _type, _size,VinGuard::functors::out::_s_byte,VinGuard::functors::out::_d_byte);\
-	_blocks.push(_block);\
+	VinGuard::block _block(\
+            (PVOID)_data, \
+            _size,\
+            VinGuard::functors::out::_s_byte,\
+            VinGuard::functors::in::_d_byte);\
+	        _blocks.push(_block);\
+}
+
+#define SERIALIZE_MAP_ENTRY_CHAR(_data, _size )\
+{\
+	VinGuard::block _block(\
+            (PVOID)_data, \
+            _size,\
+            VinGuard::functors::out::_s_char,\
+            VinGuard::functors::in::_d_char);\
+	        _blocks.push(_block);\
 }
 
 #define SERIALIZE_MAP_END() \
@@ -59,30 +72,27 @@ namespace config
 
 namespace VinGuard
 {
-
-    typedef struct _MEMORY_STREAM {
-        PUCHAR buffer;     // Write buffer
-        ULONG  capacity;   // Total size of the buffer
-        ULONG  offset;     // Current write position
-    } MEMORY_STREAM, * PMEMORY_STREAM;
-
-
     bool memory_stream_writer(PMEMORY_STREAM stream, const PVOID in_data, ULONG size)
     {
         if (!stream || !in_data || stream->offset + size > stream->capacity)
+        {
             return FALSE;
+        }
+        RtlCopyMemory(
+            stream->buffer + stream->offset, 
+            in_data, 
+            size);
 
-        RtlCopyMemory(stream->buffer + stream->offset, in_data, size);
         stream->offset += size;
         return TRUE;
     }
 
-    bool memory_stream_reader(PMEMORY_STREAM stream, PVOID out_data, ULONG size)
+    bool memory_stream_reader(PMEMORY_STREAM stream, const PVOID out_data, ULONG size)
     {
         if (!stream || !out_data || stream->offset + size > stream->capacity)
             return FALSE;
 
-        RtlCopyMemory(out_data, stream->buffer + stream->offset, size);
+        RtlCopyMemory(out_data, stream->buffer+stream->offset, size);
         stream->offset += size;
         return TRUE;
     }
@@ -94,17 +104,18 @@ namespace functors
 	    static void _s_char          
             (PMEMORY_STREAM stream, PVOID p, ULONG size) 
 	    {
-            // Write the size first
+            size = reinterpret_cast<PUNICODE_STRING>(p)->Length;
             memory_stream_writer(stream, &size, sizeof(ULONG));
-            // Write the actual data
-            memory_stream_writer(stream, p, size);
+            memory_stream_writer(stream, 
+                reinterpret_cast<PUNICODE_STRING>(p)->Buffer, 
+                reinterpret_cast<PUNICODE_STRING>(p)->Length);
 	    }
 
         template<typename pod>
 	    static void _s_pod           
             (PMEMORY_STREAM stream, PVOID p, ULONG size)
 	    {
-            UNREFERENCED_PARAMETER(size); // size not used here
+            UNREFERENCED_PARAMETER(size); 
             memory_stream_writer(stream, p, sizeof(pod));
 	    }
 
@@ -119,40 +130,49 @@ namespace functors
 
     struct in
     {
-	    static char* _d_char         
-            (PMEMORY_STREAM stream, PVOID p, ULONG size, PVOID _heap, ULONG _heap_size)
-	    {
+	    static void _d_char    
+            (PMEMORY_STREAM stream, PVOID p, PULONG size, PMEMORY_STREAM _heap)
+        {
             UNREFERENCED_PARAMETER(p);
-            size = 0;
+
+            *size = 0;
 
             //read the size first
-            if (!memory_stream_reader(stream, &size, sizeof(ULONG)))
-                return NULL;
+            if (!memory_stream_reader(stream, size, sizeof(ULONG)))
+                return;
 
-            if (size > _heap_size)
-                return NULL;
+            if (*size > _heap->capacity)
+                return;
 
-            RtlZeroMemory(_heap, _heap_size);
+            VinGuard::memory::zero_memory_buffer(_heap);
 
-            //read the actual data next
-            if (!memory_stream_reader(stream, _heap, size))
-                return NULL;
+            if (!memory_stream_reader(stream, _heap->buffer, *size))
+                return;
 
-            return (char*)_heap;
+            UNICODE_STRING _ts;
+            _ts.Length = (USHORT)(*size);
+            _ts.MaximumLength = (USHORT)(*size);
+            _ts.Buffer = (PWSTR)_heap->buffer;
+            
+            NTSTATUS status = RtlDuplicateUnicodeString(
+                RTL_DUPLICATE_UNICODE_STRING_NULL_TERMINATE,
+                &_ts,
+                reinterpret_cast<PUNICODE_STRING>(p));
+
+            if (!NT_SUCCESS(status))
+                return;
 	    }
 
     	static void _d_byte          
-            (PMEMORY_STREAM stream, PVOID p, ULONG size, LPBYTE _heap, ULONG _heap_size)
+            (PMEMORY_STREAM stream, PVOID p, PULONG size, PMEMORY_STREAM _heap)
 	    {
             UNREFERENCED_PARAMETER(_heap);
-            UNREFERENCED_PARAMETER(_heap_size);
-
-            memory_stream_reader(stream, p, size);
+            memory_stream_reader(stream, p, *size);
 	    }
 	
         template<typename pod>
 	    static void _d_pod           
-            (PMEMORY_STREAM stream, PVOID p, ULONG size, LPBYTE _heap, ULONG _heap_size)
+            (PMEMORY_STREAM stream, PVOID p, PULONG size, PMEMORY_STREAM _heap)
 	    {
             UNREFERENCED_PARAMETER(size);
             UNREFERENCED_PARAMETER(_heap);
@@ -161,7 +181,7 @@ namespace functors
             memory_stream_reader(stream, p, sizeof(pod));
 	    }
 
-        typedef void (*callback)(PMEMORY_STREAM, PVOID, ULONG, LPBYTE, ULONG);
+        typedef void (*callback)(PMEMORY_STREAM, PVOID, PULONG, PMEMORY_STREAM);
     };
 }
 
@@ -171,13 +191,17 @@ namespace functors
     struct block
 	{
 	public:
-		block():_p(0),_size(0),_s(0),_d(0){}
+		block():_p(0),_size(0),_s(0),_d(0){
+        
+        
+        }
         block(
-            PVOID _ip, 
+            PVOID _ip,
             ULONG _isize,
-            functors::out::callback _is, 
-            functors::in::callback _id):
-            _p(_ip),_size(_isize),_s(_is),_d(_id){}
+            functors::out::callback _is,
+            functors::in::callback _id) :
+            _p(_ip), _size(_isize), _s(_is), _d(_id) {
+        }
 
 		PVOID _p;
         ULONG _size;
@@ -207,10 +231,10 @@ namespace functors
                 b._s(stream,b._p,b._size);
             }
             
-            static void in(block b,PMEMORY_STREAM stream, LPBYTE _heap, ULONG _heap_size){
+            static void in(block b,PMEMORY_STREAM stream, PMEMORY_STREAM _heap){
                 if (stream->offset < stream->capacity)
                 {
-                    b._d(stream, b._p, b._size, _heap, _heap_size);
+                    b._d(stream, b._p, &b._size, _heap);
                 }
             }
         };
@@ -224,36 +248,44 @@ namespace functors
 	public:
 
 		serializer(){
-            _heap = (PUCHAR)ExAllocatePool2(NonPagedPoolNx, config::heap_size, 'vght');
+            _heap = VinGuard::memory::allocate_memory_buffer(config::heap_size);
         }
 
 		virtual ~serializer(){
-            if(_heap)
-                ExFreePoolWithTag(_heap, 'vght');
+            VinGuard::memory::free_memory_buffer(_heap);
         }
 
         virtual void generate_blocks()=0;
 
         bool serialize(PMEMORY_STREAM stream)
         {
-            if (_blocks.count == 0)
+            if (nullptr == stream || stream->capacity == 0)
+            {
                 return false;
+            }
 
-            for (ULONG i = 0; i < _blocks.count; ++i){
+            if (_blocks.count == 0)
+            {
+                return false;
+            }
+
+            for (ULONG i = 0; i < _blocks.count; ++i) {
+                
                 functors::exec::out(_blocks.items[i], stream);
             }
 
             return true;
         }
 
-        bool deserialize(PMEMORY_STREAM& stream)
+        bool deserialize(PMEMORY_STREAM stream)
         {
-            if (_blocks.count == 0)
+            stream->offset = 0;
+
             if (_blocks.count == 0)
                 return false;
 
             for (ULONG i = 0; i < _blocks.count; ++i) {
-                functors::exec::in(_blocks.items[i], stream, _heap, config::heap_size);
+                functors::exec::in(_blocks.items[i], stream, _heap);
             }
 
             return true;
@@ -261,7 +293,7 @@ namespace functors
 
 	protected:
 
-        LPBYTE _heap;
+        VinGuard::PMEMORY_STREAM _heap;
         BLOCK_LIST _blocks;
 	};
 }
