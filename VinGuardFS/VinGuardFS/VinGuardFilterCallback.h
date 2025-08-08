@@ -43,6 +43,15 @@ namespace VinGuard
             UNREFERENCED_PARAMETER(CompletionContext);
             UNREFERENCED_PARAMETER(FltObjects);
 
+            /*
+            * IRP = what the applications wants to do with this file
+            * IO_STACK_LOCATION is where you'll find the context for this specific 
+            * filter to perform an action and is morphed/updated based on the 
+            * registrations requested by the filter. 
+            * FilterManager takes care of crafting the specific IRP view for 
+            * this filter and is provied in Iopb structure below 
+            * IO_STACK_LOCATION is more of a legacy structure.
+            */
             if (Data->Iopb && 
                 Data->Iopb->TargetFileObject && 
                 Data->Iopb->TargetFileObject->FileName.Buffer) 
