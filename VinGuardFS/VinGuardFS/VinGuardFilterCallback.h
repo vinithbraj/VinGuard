@@ -62,21 +62,19 @@ namespace VinGuard
                     de("filter com object is nullptr");
                 }
                 else {
-                    PMEMORY_STREAM out = VinGuard::memory::allocate_memory_buffer(1000);
-                    filter_message _msg;
-                    _msg.m_canonical_file_path = &(Data->Iopb->TargetFileObject->FileName);
-                    _msg.file_action = 123;
-                    _msg.filter_verdict = 456;
-                    _msg.serialize(out);
-
-
+                   // PMEMORY_STREAM out = VinGuard::memory::allocate_memory_buffer(1000);
+                    
+                   // filter_message _msg;
+                    //_msg.copy_into(Data);
+                    //_msg.serialize(out);
+                    
                     if (!g_filter_comm)
                     {
                         de("invalid ptr = g_filter_comm, unable to communicate with user mode");
                     }
                     else 
                     {
-                        g_filter_comm->send_message_sync(out->buffer, out->offset, nullptr, NULL, 100);
+                       // g_filter_comm->send_message_sync(out->buffer, out->offset, nullptr, NULL, 100);
 
                     }
                 }
